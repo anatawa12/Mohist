@@ -27,7 +27,7 @@ Progress
       
 Getting Help
 ------
-   [**Home**](https://mohist.red/)
+   [**Home**](https://mohistmc.com/)
    
    [**Discord**](https://discord.gg/ZgXjHGd)
    
