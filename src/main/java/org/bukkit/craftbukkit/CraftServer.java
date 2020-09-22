@@ -26,6 +26,8 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Base64;
@@ -54,6 +56,7 @@ import net.minecraft.command.arguments.EntityArgument;
 import net.minecraft.command.impl.ReloadCommand;
 import net.minecraft.enchantment.Enchantments;
 import net.minecraft.entity.player.ServerPlayerEntity;
+import net.minecraft.fluid.Fluid;
 import net.minecraft.item.FilledMapItem;
 import net.minecraft.item.Item;
 import net.minecraft.item.Items;
@@ -77,7 +80,6 @@ import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.datafix.DataFixesManager;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.vector.Vector3d;
-import net.minecraft.util.registry.DynamicRegistries;
 import net.minecraft.util.registry.Registry;
 import net.minecraft.util.registry.SimpleRegistry;
 import net.minecraft.util.registry.WorldSettingsImport;
@@ -165,6 +167,7 @@ import org.bukkit.craftbukkit.potion.CraftPotionBrewer;
 import org.bukkit.craftbukkit.scheduler.CraftScheduler;
 import org.bukkit.craftbukkit.scoreboard.CraftScoreboardManager;
 import org.bukkit.craftbukkit.tag.CraftBlockTag;
+import org.bukkit.craftbukkit.tag.CraftFluidTag;
 import org.bukkit.craftbukkit.tag.CraftItemTag;
 import org.bukkit.craftbukkit.util.CraftChatMessage;
 import org.bukkit.craftbukkit.util.CraftIconCache;
@@ -750,7 +753,8 @@ public final class CraftServer implements Server {
         configuration = YamlConfiguration.loadConfiguration(getConfigFile());
         commandsConfiguration = YamlConfiguration.loadConfiguration(getCommandsConfigFile());
 
-        console.settings = new ServerPropertiesProvider(console.func_244267_aX(), console.options);
+        Path path = Paths.get("server.properties");
+        console.settings = new ServerPropertiesProvider(console.func_244267_aX(), path);
         ServerProperties config = console.settings.getProperties();
 
         console.setAllowPvp(config.allowPvp);
@@ -982,9 +986,7 @@ public final class CraftServer implements Server {
 
         boolean hardcore = creator.hardcore();
 
-        DynamicRegistries.Impl iregistrycustom_dimension = DynamicRegistries.func_239770_b_();
-
-        WorldSettingsImport<INBT> registryreadops = WorldSettingsImport.func_244335_a((DynamicOps) NBTDynamicOps.INSTANCE, console.getDataPackRegistries().func_240970_h_(), iregistrycustom_dimension);
+        WorldSettingsImport<INBT> registryreadops = WorldSettingsImport.func_244335_a((DynamicOps) NBTDynamicOps.INSTANCE, console.getDataPackRegistries().func_240970_h_(), console.field_240767_f_);
         ServerWorldInfo worlddata = (ServerWorldInfo) worldSession.func_237284_a_((DynamicOps) registryreadops, console.datapackconfiguration);
 
         WorldSettings worldSettings;
@@ -1007,7 +1009,7 @@ public final class CraftServer implements Server {
             net.minecraft.server.Main.func_240761_a_(worldSession, DataFixesManager.getDataFixer(), console.options.has("eraseCache"), () -> {
                 return true;
             }, worlddata.func_230418_z_().func_236224_e_().func_239659_c_().stream().map((entry) -> {
-                return RegistryKey.func_240903_a_(Registry.field_239698_ad_, ((RegistryKey) entry.getKey()).func_240901_a_());
+                return RegistryKey.func_240903_a_(Registry.field_239699_ae_, ((RegistryKey) entry.getKey()).func_240901_a_());
             }).collect(ImmutableSet.toImmutableSet()));
         }
 
@@ -1040,12 +1042,12 @@ public final class CraftServer implements Server {
         internal.setAllowedSpawnTypes(true, true);
         console.worlds.put(internal.func_234923_W_(), internal);
 
-        pluginManager.callEvent(new WorldInitEvent(internal.getWorldCB()));
+        pluginManager.callEvent(new WorldInitEvent(internal.getCBWorld()));
 
         getServer().loadInitialChunks(internal.getChunkProvider().chunkManager.field_219266_t, internal);
 
-        pluginManager.callEvent(new WorldLoadEvent(internal.getWorldCB()));
-        return internal.getWorldCB();
+        pluginManager.callEvent(new WorldLoadEvent(internal.getCBWorld()));
+        return internal.getCBWorld();
     }
 
     @Override
@@ -1073,7 +1075,7 @@ public final class CraftServer implements Server {
             return false;
         }
 
-        WorldUnloadEvent e = new WorldUnloadEvent(handle.getWorldCB());
+        WorldUnloadEvent e = new WorldUnloadEvent(handle.getCBWorld());
         pluginManager.callEvent(e);
 
         if (e.isCancelled()) {
@@ -1722,7 +1724,7 @@ public final class CraftServer implements Server {
             if (pos == null) {
                 completions = getCommandMap().tabComplete(player, message);
             } else {
-                completions = getCommandMap().tabComplete(player, message, new Location(world.getWorldCB(), pos.x, pos.y, pos.z));
+                completions = getCommandMap().tabComplete(player, message, new Location(world.getCBWorld(), pos.x, pos.y, pos.z));
             }
         } catch (CommandException ex) {
             player.sendMessage(ChatColor.RED + "An internal error occurred while attempting to tab-complete this command");
@@ -1954,6 +1956,10 @@ public final class CraftServer implements Server {
                 Preconditions.checkArgument(clazz == org.bukkit.Material.class, "Item namespace must have material type");
 
                 return (org.bukkit.Tag<T>) new CraftItemTag(console.func_244266_aF().func_241836_b(), key);
+            case org.bukkit.Tag.REGISTRY_FLUIDS:
+                Preconditions.checkArgument(clazz == org.bukkit.Fluid.class, "Fluid namespace must have fluid type");
+
+                return (org.bukkit.Tag<T>) new CraftFluidTag(console.func_244266_aF().func_241837_c(), key);
             default:
                 throw new IllegalArgumentException();
         }
@@ -1973,6 +1979,11 @@ public final class CraftServer implements Server {
 
                 ITagCollection<Item> itemTags = console.func_244266_aF().func_241836_b();
                 return itemTags.func_241833_a().keySet().stream().map(key -> (org.bukkit.Tag<T>) new CraftItemTag(itemTags, key)).collect(ImmutableList.toImmutableList());
+            case org.bukkit.Tag.REGISTRY_FLUIDS:
+                Preconditions.checkArgument(clazz == org.bukkit.Material.class, "Fluid namespace must have fluid type");
+
+                ITagCollection<Fluid> fluidTags = console.func_244266_aF().func_241837_c();
+                return fluidTags.func_241833_a().keySet().stream().map(key -> (org.bukkit.Tag<T>) new CraftFluidTag(fluidTags, key)).collect(ImmutableList.toImmutableList());
             default:
                 throw new IllegalArgumentException();
         }

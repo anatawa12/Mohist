@@ -115,7 +115,7 @@ public class CraftLootTable implements org.bukkit.loot.LootTable {
 
     public static LootContext convertContext(net.minecraft.loot.LootContext info) {
         BlockPos position = info.get(LootParameters.POSITION);
-        Location location = new Location(info.getWorld().getWorldCB(), position.getX(), position.getY(), position.getZ());
+        Location location = new Location(info.getWorld().getCBWorld(), position.getX(), position.getY(), position.getZ());
         LootContext.Builder contextBuilder = new LootContext.Builder(location);
 
         if (info.has(LootParameters.KILLER_ENTITY)) {

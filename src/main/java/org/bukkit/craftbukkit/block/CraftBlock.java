@@ -8,11 +8,16 @@ import java.util.stream.Collectors;
 import net.minecraft.block.Blocks;
 import net.minecraft.block.ContainerBlock;
 import net.minecraft.block.RedstoneWireBlock;
+import net.minecraft.item.BoneMealItem;
+import net.minecraft.item.ItemUseContext;
 import net.minecraft.item.Items;
 import net.minecraft.tileentity.TileEntity;
+import net.minecraft.util.ActionResultType;
 import net.minecraft.util.Direction;
+import net.minecraft.util.Hand;
 import net.minecraft.util.math.AxisAlignedBB;
 import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.math.BlockRayTraceResult;
 import net.minecraft.util.math.RayTraceContext;
 import net.minecraft.util.math.shapes.VoxelShape;
 import net.minecraft.util.math.vector.Vector3d;
@@ -491,7 +496,7 @@ public class CraftBlock implements Block {
             return null;
         }
 
-        return Registry.BIOME.get(CraftNamespacedKey.fromMinecraft(registry.getKey(base)));
+        return org.bukkit.Registry.BIOME.get(CraftNamespacedKey.fromMinecraft(registry.getKey(base)));
     }
 
     public static net.minecraft.world.biome.Biome biomeToBiomeBase(Registry<net.minecraft.world.biome.Biome> registry, Biome bio) {
@@ -639,10 +644,10 @@ public class CraftBlock implements Block {
 
     @Override
     public boolean applyBoneMeal(BlockFace face) {
-        EnumDirection direction = blockFaceToNotch(face);
-        ItemActionContext context = new ItemActionContext(getCraftWorld().getHandle(), null, EnumHand.MAIN_HAND, Items.BONE_MEAL.createItemStack(), new MovingObjectPositionBlock(Vec3D.ORIGIN, direction, getPosition(), false));
+        Direction direction = blockFaceToNotch(face);
+        ItemUseContext context = new ItemUseContext(getCraftWorld().getHandle(), null, Hand.MAIN_HAND, Items.BONE_MEAL.getDefaultInstance(), new BlockRayTraceResult(Vector3d.ZERO, direction, getPosition(), false));
 
-        return ItemBoneMeal.applyBonemeal(context) == EnumInteractionResult.SUCCESS;
+        return BoneMealItem.applyBonemeal(context) == ActionResultType.SUCCESS;
     }
 
     @Override

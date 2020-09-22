@@ -37,6 +37,7 @@ import net.minecraft.util.datafix.TypeReferences;
 import net.minecraft.util.registry.Registry;
 import net.minecraft.world.storage.FolderName;
 import org.bukkit.Bukkit;
+import org.bukkit.Fluid;
 import org.bukkit.Material;
 import org.bukkit.NamespacedKey;
 import org.bukkit.UnsafeValues;
@@ -83,8 +84,10 @@ public final class CraftMagicNumbers implements UnsafeValues {
     // ========================================================================
     private static final Map<Block, Material> BLOCK_MATERIAL = new HashMap<>();
     private static final Map<Item, Material> ITEM_MATERIAL = new HashMap<>();
+    private static final Map<net.minecraft.fluid.Fluid, Fluid> FLUID_MATERIAL = new HashMap<>();
     private static final Map<Material, Item> MATERIAL_ITEM = new HashMap<>();
     private static final Map<Material, Block> MATERIAL_BLOCK = new HashMap<>();
+    private static final Map<Material, net.minecraft.fluid.Fluid> MATERIAL_FLUID = new HashMap<>();
 
     static {
         for (Block block : Registry.BLOCK) {
@@ -93,6 +96,10 @@ public final class CraftMagicNumbers implements UnsafeValues {
 
         for (Item item : Registry.ITEM) {
             ITEM_MATERIAL.put(item, Material.getMaterial(Registry.ITEM.getKey(item).getPath().toUpperCase(Locale.ROOT)));
+        }
+
+        for (net.minecraft.fluid.Fluid fluid : Registry.FLUID) {
+            FLUID_MATERIAL.put(fluid, org.bukkit.Registry.FLUID.get(CraftNamespacedKey.fromMinecraft(Registry.FLUID.getKey(fluid))));
         }
 
         for (Material material : Material.values()) {
@@ -107,6 +114,9 @@ public final class CraftMagicNumbers implements UnsafeValues {
             Registry.BLOCK.func_241873_b(key).ifPresent((block) -> {
                 MATERIAL_BLOCK.put(material, block);
             });
+            Registry.FLUID.func_241873_b(key).ifPresent((fluid) -> {
+                MATERIAL_FLUID.put(material, fluid);
+            });
         }
     }
 
@@ -116,6 +126,10 @@ public final class CraftMagicNumbers implements UnsafeValues {
 
     public static Material getMaterial(Item item) {
         return ITEM_MATERIAL.getOrDefault(item, Material.AIR);
+    }
+
+    public static Fluid getFluid(net.minecraft.fluid.Fluid fluid) {
+        return FLUID_MATERIAL.get(fluid);
     }
 
     public static Item getItem(Material material) {
@@ -132,6 +146,10 @@ public final class CraftMagicNumbers implements UnsafeValues {
         }
 
         return MATERIAL_BLOCK.get(material);
+    }
+
+    public static net.minecraft.fluid.Fluid getFluid(Fluid fluid) {
+        return MATERIAL_FLUID.get(fluid);
     }
 
     public static ResourceLocation key(Material mat) {

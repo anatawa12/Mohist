@@ -48,7 +48,7 @@ public final class CraftRaid implements Raid {
     public Location getLocation() {
         BlockPos pos = handle.getCenter();
         World world = handle.getWorld();
-        return new Location(world.getWorldCB(), pos.getX(), pos.getY(), pos.getZ());
+        return new Location(world.getCBWorld(), pos.getX(), pos.getY(), pos.getZ());
     }
 
     @Override
